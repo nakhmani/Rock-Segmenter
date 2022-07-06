@@ -22,7 +22,7 @@ function varargout = RockSegmenter(varargin)
 
 % Edit the above text to modify the response to help RockSegmenter
 
-% Last Modified by GUIDE v2.5 06-Jun-2021 14:12:13
+% Last Modified by GUIDE v2.5 05-Jul-2022 19:33:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -43,12 +43,19 @@ else
 end
 % End initialization code - DO NOT EDIT
 
+function figure1_CreateFcn(hObject, eventdata, handles)
 function sImage_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 function RockSegmenter_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+handles.sParam2.Enable = "off";
+handles.tParam2.Enable = "off";
+handles.eParam2.Enable = "off";
+handles.sParam3.Enable = "off";
+handles.tParam3.Enable = "off";
+handles.eParam3.Enable = "off";
 guidata(hObject, handles);
 function eParam1_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -73,7 +80,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 function cbMask_Callback(hObject, eventdata, handles)
 function cbCrop_Callback(hObject, eventdata, handles)
-function cbActiveContours_Callback(hObject, eventdata, handles)
 function eMaskSuffix_Callback(hObject, eventdata, handles)
 function eMaskSuffix_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -106,7 +112,63 @@ function cbSuppressMasks_Callback(hObject, eventdata, handles)
 function varargout = RockSegmenter_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+function pbAutomate_Callback(hObject, eventdata, handles)
+f1 = figure;
+ax1 = axes;
+imshow(handles.I,'Parent',ax1);
+ROI = drawfreehand(ax1);
+
+global groundTruth ind I
+I = rgb2gray(handles.I);
+groundTruth = double(createMask(ROI,I));
+
+
+if handles.rbInputWhite.Value
+    hs = imhist(I);
+    [~,mxind] = max(hs(150:end));
+    [~,ind] = min(hs(150:mxind+149));
+    handles.sParam1.Value = fminbnd(@segmentWhite,0,1);
+    handles.eParam1.String = num2str(handles.sParam1.Value);
+
+elseif handles.rbInputBlack.Value
+    handles.sParam1.Value = fminbnd(@segmentBlack,0,1);
+    handles.eParam1.String = num2str(handles.sParam1.Value);
+    
+elseif handles.rbInputGradient.Value
+    handles.sParam1.Value = fminbnd(@segmentGradient,0,1);
+    handles.eParam1.String = num2str(handles.sParam1.Value);
+    
+end
+close(f1)
+segmentImage(handles)
+
+
+
+
+
+% opts = optimoptions(@fmincon,'Algorithm','sqp');
+% problem = createOptimProblem('fmincon','objective',...
+%     @segmentWhite,'x0',0.5,'lb',0,'ub',1,'options',opts);
+% gs = GlobalSearch;
+% [param1,f] = run(gs,problem)
+
+        
+
+
+
+
+function cbActiveContours_Callback(hObject, eventdata, handles)
+if hObject.Value
+    handles.sParam3.Enable = "on";
+    handles.tParam3.Enable = "on";
+    handles.eParam3.Enable = "on";
+else
+    handles.sParam3.Enable = "off";
+    handles.tParam3.Enable = "off";
+    handles.eParam3.Enable = "off";
+end
 
 function eParam1_Callback(hObject, eventdata, handles)
 handles.sParam1.Value = min(1,max(0,str2double(hObject.String)));
@@ -117,7 +179,7 @@ handles.sParam2.Value = min(1,max(0,str2double(hObject.String)));
 segmentImage(handles)
 
 function eParam3_Callback(hObject, eventdata, handles)
-handles.sParam3.Value = min(1,max(0,str2double(hObject.String)));
+handles.sParam3.Value = min(20,max(0,str2double(hObject.String)));
 segmentImage(handles)
 
 
@@ -202,11 +264,13 @@ segmentImage(handles)
 
 
 function sParam2_Callback(hObject, eventdata, handles)
+handles.eParam2.String = num2str(hObject.Value);
 segmentImage(handles)
 
 
 
 function sParam3_Callback(hObject, eventdata, handles)
+handles.eParam3.String = num2str(hObject.Value);
 segmentImage(handles)
 
 function tbMask_Callback(hObject, eventdata, handles)
@@ -214,42 +278,46 @@ segmentImage(handles)
 
 
 function rbInputWhite_Callback(hObject, eventdata, handles)
+handles.sParam2.Enable = "off";
+handles.tParam2.Enable = "off";
+handles.eParam2.Enable = "off";
 handles.sParam1.Value = 0.5;
 handles.sParam2.Value = 0.5;
-handles.sParam3.Value = 0.5;
 handles.eParam1.String = '0.5';
 handles.eParam2.String = '0.5';
-handles.eParam3.String = '0.5';
 segmentImage(handles)
 
 
 function rbInputBlack_Callback(hObject, eventdata, handles)
+handles.sParam2.Enable = "off";
+handles.tParam2.Enable = "off";
+handles.eParam2.Enable = "off";
 handles.sParam1.Value = 0.5;
 handles.sParam2.Value = 0.5;
-handles.sParam3.Value = 0.5;
 handles.eParam1.String = '0.5';
 handles.eParam2.String = '0.5';
-handles.eParam3.String = '0.5';
 segmentImage(handles)
 
 
 function rbInputGradient_Callback(hObject, eventdata, handles)
+handles.sParam2.Enable = "off";
+handles.tParam2.Enable = "off";
+handles.eParam2.Enable = "off";
 handles.sParam1.Value = 0.794;
 handles.sParam2.Value = 0.5;
-handles.sParam3.Value = 0.5;
 handles.eParam1.String = '0.794';
 handles.eParam2.String = '0.5';
-handles.eParam3.String = '0.5';
 segmentImage(handles)
 
 
 function rbInputComplex_Callback(hObject, eventdata, handles)
+handles.sParam2.Enable = "on";
+handles.tParam2.Enable = "on";
+handles.eParam2.Enable = "on";
 handles.sParam1.Value = 0.5;
 handles.sParam2.Value = 0.5;
-handles.sParam3.Value = 0.5;
 handles.eParam1.String = '0.5';
 handles.eParam2.String = '0.5';
-handles.eParam3.String = '0.5';
 segmentImage(handles)
 
 
@@ -274,8 +342,9 @@ h = waitbar(0,'Please wait...');
 fid = fopen(fullfile(handles.eSave.String,'processing.log'),'wt');
 listing = dir([handles.eLoad.String,'\*.jpg']);
 param1 = handles.sParam1.Value;
+param2 = handles.sParam2.Value;
 fprintf(fid,'%s%f\n','Parameter 1 = ',param1);
-fprintf(fid,'%s%f\n','Parameter 2 = ',handles.sParam2.Value);
+fprintf(fid,'%s%f\n','Parameter 2 = ',param2);
 fprintf(fid,'%s%f\n','Parameter 3 = ',handles.sParam3.Value);
 fprintf(fid,'%s%s\n','Saving in ',handles.eSave.String);
 for t=1:numel(listing)
@@ -291,7 +360,7 @@ for t=1:numel(listing)
         BW=Gmag>50+100*param1^3-50;
         fprintf(fid,'%s\n','Assuming gradient background');
     elseif handles.rbInputComplex.Value
-        BW = universal(J,param1);
+        BW = userSegmentation(J,param1,param2);
         fprintf(fid,'%s\n','Assuming complex background');
     else
         hs = imhist(J);
@@ -304,7 +373,7 @@ for t=1:numel(listing)
     BW = bwareafilt(BW,1);
     BW = uint8(imfill(BW, 'holes'));
     if handles.cbActiveContours.Value
-        BW = activecontour(J,BW,20,'edge','SmoothFactor',5);
+        BW = activecontour(J,BW,20,'edge','SmoothFactor',str2double(handles.eParam3.String));
         BW = uint8(BW);
     end
     I = uint8(I);
@@ -386,6 +455,7 @@ end
 function pbPreview_Callback(hObject, eventdata, handles)
 figure(1)
 param1 = handles.sParam1.Value;
+param2 = handles.sParam2.Value;
 I = handles.I;
 J = rgb2gray(I);
 if handles.rbInputBlack.Value
@@ -394,7 +464,7 @@ elseif handles.rbInputGradient.Value
     [Gmag,~] = imgradient(J);
     BW=Gmag>50+100*param1^3-50;
 elseif handles.rbInputComplex.Value
-    BW = universal(J,param1);
+    BW = userSegmentation(J,param1,param2);
 else
     hs = imhist(J);
     [~,mxind] = max(hs(150:end));
@@ -405,7 +475,7 @@ BW = imclose(BW,strel('disk',2));
 BW = bwareafilt(BW,1);
 BW = uint8(imfill(BW, 'holes'));
 if handles.cbActiveContours.Value
-    BW = activecontour(J,BW,20,'edge','SmoothFactor',5);
+    BW = activecontour(J,BW,20,'edge','SmoothFactor',str2double(handles.eParam3.String));
 end
 I = uint8(I);
 I = I.*cat(3,BW,BW,BW);
@@ -447,7 +517,7 @@ else
         imshow(I)
     end
 end
-
+title(handles.tImageName.String)
 
 function pbHistogram_Callback(hObject, eventdata, handles)
 imcontrast(handles.axes1)
@@ -536,34 +606,31 @@ save(fullfile(path,file),'eParam3','eParam2','eParam1','value3','max3','min3',..
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function BW = universal(I,param1)
-h = waitbar(0,'Please wait...');
-I = double(I);
 
-for row=5:size(I,1)-5
-    for col=5:size(I,2)-5
-        Z = I(row-4:row+4,col-4:col+4);
-        [X,Y] = meshgrid(1:9,1:9);
-        Xcolv = X(:);
-        Const = ones(size(Xcolv));
-        C = [Xcolv Y(:) Const]\Z(:);
-        Z_p = C(1) * X + C(2) * Y + C(3);
-        Z_f = Z - Z_p;
-        J(row,col) = std(Z_f(:));
-    end
-    waitbar(row/size(I,1)*10/11)
-end
-[hh,bb]=hist(J(:),0:0.01:100);
-cnt=1;
-while sum(hh(1:cnt))/sum(hh(cnt+1:end))<8
-    cnt=cnt+1;
-end
-BW = J>bb(cnt)+100*param1-50;
-BW = imclose(BW,strel('disk',5));
-BW = imfill(bwareafilt(BW,1),'holes');
-BW = padarray(BW,[5 5],0,'post');
-close(h)
+function f = segmentWhite(param1)
+global I ind groundTruth
+BW = I<149+ind+100*param1-50;
+BW = imclose(BW,strel('disk',2));
+BW = bwareafilt(BW,1);
+BW = double(imfill(BW, 'holes'));
+f = -sum(BW.*groundTruth,"all")/(sum(BW,"all")+sum(groundTruth,"all"));
 
+function f = segmentBlack(param1)
+global I groundTruth
+BW = I>20+100*param1-50;
+BW = imclose(BW,strel('disk',2));
+BW = bwareafilt(BW,1);
+BW = double(imfill(BW, 'holes'));
+f = -sum(BW.*groundTruth,"all")/(sum(BW,"all")+sum(groundTruth,"all"));
+
+function f = segmentGradient(param1)
+global I groundTruth
+[Gmag,~] = imgradient(I);
+BW=Gmag>50+100*param1^3-50;
+BW = imclose(BW,strel('disk',2));
+BW = bwareafilt(BW,1);
+BW = double(imfill(BW, 'holes'));
+f = -sum(BW.*groundTruth,"all")/(sum(BW,"all")+sum(groundTruth,"all"));
 
 
 function segmentImage(handles)
@@ -595,7 +662,7 @@ elseif handles.rbInputGradient.Value
     BW = bwareafilt(BW,1);
     BW = uint8(imfill(BW, 'holes'));
 else
-    BW = universal(I,param1);
+    BW = userSegmentation(I,param1);
 end
 if handles.tbMask.Value
     imshow(BW,[])
