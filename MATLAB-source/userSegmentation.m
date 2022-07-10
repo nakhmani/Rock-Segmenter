@@ -21,7 +21,7 @@ while sum(hh(1:cnt))/sum(hh(cnt+1:end))<8
     cnt=cnt+1;
 end
 BW = J>bb(cnt)+100*param1-50;
-BW = imclose(BW,strel('disk',5));
+BW = imclose(BW,strel('disk',10*param2));
 BW = imfill(bwareafilt(BW,1),'holes');
 BW = padarray(BW,[5 5],0,'post');
 close(h)
