@@ -118,6 +118,7 @@ function pbAutomate_Callback(hObject, eventdata, handles)
 f1 = figure;
 ax1 = axes;
 imshow(handles.I,'Parent',ax1);
+title("Select the boundary by dragging the mouse cursor and wait until the figure closes")
 ROI = drawfreehand(ax1);
 
 global groundTruth ind I
@@ -339,7 +340,8 @@ guidata(hObject, handles);
 
 function pbProcess_Callback(hObject, eventdata, handles)
 h = waitbar(0,'Please wait...');
-fid = fopen(fullfile(handles.eSave.String,'processing.log'),'wt');
+C = strsplit(handles.eSave.String,'\');
+fid = fopen(fullfile(handles.eSave.String,[C{end},'_processing.log']),'wt');
 listing = dir([handles.eLoad.String,'\*.jpg']);
 param1 = handles.sParam1.Value;
 param2 = handles.sParam2.Value;
@@ -517,7 +519,7 @@ else
         imshow(I)
     end
 end
-title(handles.tImageName.String)
+title(handles.tImageName.String, 'Interpreter', 'none')
 
 function pbHistogram_Callback(hObject, eventdata, handles)
 imcontrast(handles.axes1)
