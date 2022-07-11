@@ -50,6 +50,7 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 function RockSegmenter_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
+handles.automateImage = [];
 handles.sParam2.Enable = "off";
 handles.tParam2.Enable = "off";
 handles.eParam2.Enable = "off";
@@ -115,6 +116,7 @@ varargout{1} = handles.output;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function pbAutomate_Callback(hObject, eventdata, handles)
+handles.automateImage = handles.tImageName.String;
 f1 = figure;
 ax1 = axes;
 imshow(handles.I,'Parent',ax1);
@@ -144,7 +146,7 @@ elseif handles.rbInputGradient.Value
 end
 close(f1)
 segmentImage(handles)
-
+guidata(hObject, handles);
 
 
 
@@ -349,6 +351,9 @@ fprintf(fid,'%s%f\n','Parameter 1 = ',param1);
 fprintf(fid,'%s%f\n','Parameter 2 = ',param2);
 fprintf(fid,'%s%f\n','Parameter 3 = ',handles.sParam3.Value);
 fprintf(fid,'%s%s\n','Saving in ',handles.eSave.String);
+if ~isempty(handles.automateImage)
+   fprintf(fid,'%s%s\n','Image used for automation: ',handles.automateImage);
+end
 for t=1:numel(listing)
     I = imread(fullfile(listing(t).folder,listing(t).name));
     fprintf(fid,'%s%s\n','Time: ',datestr(now));
